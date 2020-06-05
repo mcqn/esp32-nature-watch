@@ -29,10 +29,14 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.println();
 
-  if(!SD_MMC.begin()){
+
+  if(!SD_MMC.begin("/sdcard", true)){
       Serial.println("Card Mount Failed");
       return;
   }
+
+  pinMode(4, OUTPUT);
+  digitalWrite(4, LOW);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -111,5 +115,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(10000);
+  for (int i=0; i < 30; i++) {
+    delay(1000);
+  }
 }

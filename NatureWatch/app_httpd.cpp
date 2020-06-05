@@ -17,10 +17,15 @@
 #include "img_converters.h"
 #include "camera_index.h"
 #include "Arduino.h"
+#include <FS.h>
+#include <SD_MMC.h>
 
 #include "fb_gfx.h"
 #include "fd_forward.h"
 #include "fr_forward.h"
+
+extern bool gSaveToSD;
+extern int gImageIdx;
 
 #define ENROLL_CONFIRM_TIMES 5
 #define FACE_ID_SAVE_NUMBER 7
@@ -235,7 +240,21 @@ static esp_err_t capture_handler(httpd_req_t *req){
     uint8_t * out_buf;
     bool s;
     bool detected = false;
+    String sdPath = "/img-";
+    sdPath = sdPath+gImageIdx+".jpg";
     int face_id = 0;
+    if (gSaveToSD) {
+      File sdFile = SD_MMC.open(sdPath.c_str(), FILE_WRITE);
+      if (sdFile) {
+        sdFile.write(fb->buf, fb->len);
+        Serial.print("Saved to ");
+        sdFile.close();
+        gImageIdx++;
+      } else {
+        Serial.print("Error opening file ");
+      }
+      Serial.println(sdPath);
+    }
     if(!detection_enabled || fb->width > 400){
         size_t fb_len = 0;
         if(fb->format == PIXFORMAT_JPEG){
@@ -497,7 +516,8 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     else if(!strcmp(variable, "awb")) res = s->set_whitebal(s, val);
     else if(!strcmp(variable, "agc")) res = s->set_gain_ctrl(s, val);
     else if(!strcmp(variable, "aec")) res = s->set_exposure_ctrl(s, val);
-    else if(!strcmp(variable, "hmirror")) res = s->set_hmirror(s, val);
+    //else if(!strcmp(variable, "hmirror")) res = s->set_hmirror(s, val);
+    else if(!strcmp(variable, "hmirror")) res = (gSaveToSD = val);
     else if(!strcmp(variable, "vflip")) res = s->set_vflip(s, val);
     else if(!strcmp(variable, "awb_gain")) res = s->set_awb_gain(s, val);
     else if(!strcmp(variable, "agc_gain")) res = s->set_agc_gain(s, val);
@@ -565,7 +585,8 @@ static esp_err_t status_handler(httpd_req_t *req){
     p+=sprintf(p, "\"raw_gma\":%u,", s->status.raw_gma);
     p+=sprintf(p, "\"lenc\":%u,", s->status.lenc);
     p+=sprintf(p, "\"vflip\":%u,", s->status.vflip);
-    p+=sprintf(p, "\"hmirror\":%u,", s->status.hmirror);
+    p+=sprintf(p, "\"hmirror\":%u,", gSaveToSD);
+    //p+=sprintf(p, "\"hmirror\":%u,", s->status.hmirror);
     p+=sprintf(p, "\"dcw\":%u,", s->status.dcw);
     p+=sprintf(p, "\"colorbar\":%u,", s->status.colorbar);
     p+=sprintf(p, "\"face_detect\":%u,", detection_enabled);

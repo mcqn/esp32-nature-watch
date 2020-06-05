@@ -1,5 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
+#include <FS.h>
+#include <SD_MMC.h>
 
 //
 // WARNING!!! Make sure that you have either selected ESP32 Wrover Module,
@@ -17,12 +19,20 @@
 
 #include "Credentials.h"
 
+bool gSaveToSD = false;
+int gImageIdx = 1;
+
 void startCameraServer();
 
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
+
+  if(!SD_MMC.begin()){
+      Serial.println("Card Mount Failed");
+      return;
+  }
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;

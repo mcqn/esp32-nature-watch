@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <FS.h>
 #include <SD_MMC.h>
+#include <driver/rtc_io.h>
 
 //
 // WARNING!!! Make sure that you have either selected ESP32 Wrover Module,
@@ -37,6 +38,7 @@ void setup() {
 
   pinMode(4, OUTPUT);
   digitalWrite(4, LOW);
+  rtc_gpio_hold_en(GPIO_NUM_4);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
